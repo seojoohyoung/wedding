@@ -87,6 +87,20 @@ p{margin:0}
 .info dd{margin:0;min-width:0}
 .warn{color:#9A3D34;font-weight:500}
 
+
+/* modal */
+.modal{position:fixed;inset:0;z-index:60;background:rgba(14,22,27,.55);display:flex;align-items:center;justify-content:center;padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.panel{position:relative;background:var(--surface);border-radius:16px;width:100%;max-width:420px;max-height:100%;overflow:auto;padding:30px 22px 24px;box-shadow:0 10px 40px rgba(0,0,0,.2)}
+.panel h3{font-family:var(--display);font-weight:700;font-size:20px;color:var(--accent);text-align:center;margin:0 0 8px}
+.panel .lead{text-align:center;font-size:14px;color:var(--muted);margin:0 0 20px;line-height:1.7}
+.panel .x{position:absolute;top:8px;right:8px;width:44px;height:44px;border:0;background:none;font-size:22px;color:var(--muted);cursor:pointer}
+.panel .req::after{content:" *";color:var(--accent)}
+.panel .go{width:100%;justify-content:center;min-height:50px;font-size:16px;font-weight:500;margin-top:4px}
+.panel .go[disabled]{opacity:.6;cursor:default}
+.panel .done{text-align:center;padding:18px 0 6px}
+.panel .done b{display:block;font-family:var(--display);font-size:20px;color:var(--accent);margin-bottom:8px}
+.panel input[type=text],.panel input[type=number],.panel textarea{border-radius:8px}
+.panel .seg span{border-radius:8px}
 /* forms */
 .form{display:grid;gap:16px}
 fieldset{border:0;padding:0;margin:0;min-width:0}
@@ -176,15 +190,12 @@ textarea{min-height:92px;resize:vertical}
 </section>
 
 <section id="rsvpSec" class="center">
-  <h2>참석 여부</h2>
-  <p class="note">식사 인원을 준비하려고 여쭙니다.<br>편하게 알려 주세요.</p>
-  <div class="row" style="margin-top:18px"><a class="btn fill" href="https://forms.gle/vswHyJ63Xr1izcGq5" target="_blank" rel="noopener" style="min-width:220px;justify-content:center">참석 여부 전달하기</a></div>
-</section>
-
-<section class="center">
-  <h2>축하 메시지</h2>
-  <p class="note">두 사람에게 따뜻한 한마디를<br>남겨 주세요.</p>
-  <div class="row" style="margin-top:18px"><a class="btn fill" href="https://forms.gle/DN6SX67dzdzV55xA9" target="_blank" rel="noopener" style="min-width:220px;justify-content:center">축하 메시지 남기기</a></div>
+  <h2>참석 여부 · 축하 메시지</h2>
+  <p class="note">축하의 마음으로 참석해 주시는 분들을 위해<br>미리 준비하고자 합니다.</p>
+  <div class="row" style="margin-top:18px">
+    <button class="btn fill" type="button" data-open="mRsvp" style="min-width:220px;justify-content:center">참석 여부 전달하기</button>
+    <button class="btn" type="button" data-open="mMsg" style="min-width:220px;justify-content:center">축하 메시지 남기기</button>
+  </div>
 </section>
 
 <section class="center">
@@ -193,6 +204,47 @@ textarea{min-height:92px;resize:vertical}
   <p class="foot">주형 · 하영 올림</p>
 </section>
 
+</div>
+
+
+<div class="modal" id="mRsvp" hidden role="dialog" aria-modal="true" aria-labelledby="tRsvp">
+  <div class="panel">
+    <button class="x" type="button" data-close aria-label="닫기">✕</button>
+    <div id="rsvpBody">
+      <h3 id="tRsvp">참석 여부를 알려주세요</h3>
+      <p class="lead">축하의 마음으로 참석해 주시는 분들을 위해<br>미리 준비하고자 하오니<br>참석 여부를 알려주시면 감사하겠습니다.</p>
+      <form class="form" id="fRsvp" novalidate>
+        <fieldset><legend class="req">하객 구분</legend><div class="seg"><label><input type="radio" name="side" value="신랑측"><span>신랑측</span></label><label><input type="radio" name="side" value="신부측"><span>신부측</span></label></div></fieldset>
+        <fieldset><legend class="req">참석 여부</legend><div class="seg"><label><input type="radio" name="attend" value="참석할게요"><span>참석</span></label><label><input type="radio" name="attend" value="참석이 어려워요"><span>미참석</span></label></div></fieldset>
+        <div><label class="l req" for="rName">성함</label><input type="text" id="rName" maxlength="30" placeholder="이름을 입력하세요" autocomplete="name"></div>
+        <div id="attOnly" class="form" hidden>
+          <div><label class="l" for="rCount">참석 인원 (본인 포함)</label><input type="number" id="rCount" min="1" max="10" value="1" inputmode="numeric"></div>
+          <fieldset><legend>식사</legend><div class="seg"><label><input type="radio" name="meal" value="식사할게요" checked><span>식사할게요</span></label><label><input type="radio" name="meal" value="식사는 안 해요"><span>식사는 안 해요</span></label></div></fieldset>
+        </div>
+        <div><label class="l" for="rNote">전달 사항</label><textarea id="rNote" maxlength="300" placeholder="전달할 내용을 입력하세요 (선택)"></textarea></div>
+        <p class="status" id="rStatus" role="status"></p>
+        <button class="btn fill go" type="submit" id="rGo">참석 여부 전달하기</button>
+      </form>
+    </div>
+    <div class="done" id="rDone" hidden><b>전달되었어요</b><p class="note">소중한 답변 감사합니다.</p><button class="btn" type="button" data-close style="margin-top:14px">닫기</button></div>
+  </div>
+</div>
+
+<div class="modal" id="mMsg" hidden role="dialog" aria-modal="true" aria-labelledby="tMsg">
+  <div class="panel">
+    <button class="x" type="button" data-close aria-label="닫기">✕</button>
+    <div id="msgBody">
+      <h3 id="tMsg">축하 메시지를 남겨주세요</h3>
+      <p class="lead">두 사람에게 따뜻한 한마디를<br>남겨 주시면 큰 힘이 됩니다.</p>
+      <form class="form" id="fMsg" novalidate>
+        <div><label class="l req" for="gName">성함</label><input type="text" id="gName" maxlength="30" placeholder="이름을 입력하세요" autocomplete="name"></div>
+        <div><label class="l req" for="gMsg">축하 메시지</label><textarea id="gMsg" maxlength="400" placeholder="축하 메시지를 입력하세요"></textarea></div>
+        <p class="status" id="gStatus" role="status"></p>
+        <button class="btn fill go" type="submit" id="gGo">축하 메시지 남기기</button>
+      </form>
+    </div>
+    <div class="done" id="gDone" hidden><b>남겨 주셨어요</b><p class="note">따뜻한 마음 감사합니다.</p><button class="btn" type="button" data-close style="margin-top:14px">닫기</button></div>
+  </div>
 </div>
 
 <div class="lb" id="lb" hidden role="dialog" aria-modal="true" aria-label="사진 크게 보기">
@@ -244,5 +296,48 @@ textarea{min-height:92px;resize:vertical}
   $('copyAddr').onclick=function(){copy('부산 연제구 중앙대로 1217 국제신문 4층 (K웨딩홀)',$('addrStatus'),'주소를 복사했어요.')};
   $('share').onclick=function(){copy(location.href.split('#')[0],$('shareStatus'),'링크를 복사했어요.')};
 
+
+  /* modals + Google Forms (no redirect) */
+  var RSVP_URL='https://docs.google.com/forms/d/e/1FAIpQLScTINNxuFmdSnxiUzsSptF_ZA6ahDzDlLcUg4ZDRmCwNnbvSw/formResponse';
+  var MSG_URL='https://docs.google.com/forms/d/e/1FAIpQLSdbACJX6123KLoUEZCGChAPRn2QeazMsA_PnNJqlsydcO7S9w/formResponse';
+  var openedBy=null;
+  function openM(id,el){openedBy=el;var m=$(id);m.hidden=false;document.body.style.overflow='hidden';var f=m.querySelector('input[type=text]');if(f&&window.innerWidth>600)f.focus()}
+  function closeM(m){m.hidden=true;document.body.style.overflow='';if(openedBy)openedBy.focus()}
+  document.querySelectorAll('[data-open]').forEach(function(b){b.addEventListener('click',function(){openM(b.dataset.open,b)})});
+  document.querySelectorAll('.modal').forEach(function(m){
+    m.addEventListener('click',function(e){if(e.target===m||e.target.hasAttribute('data-close'))closeM(m)});
+  });
+  document.addEventListener('keydown',function(e){if(e.key==='Escape')document.querySelectorAll('.modal').forEach(function(m){if(!m.hidden)closeM(m)})});
+  function send(url,params,btn,status,onOk){
+    btn.disabled=true;status.textContent='전달하고 있어요...';
+    fetch(url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:params.toString()})
+      .then(function(){status.textContent='';onOk()})
+      .catch(function(){btn.disabled=false;status.textContent='전달하지 못했어요. 인터넷 연결을 확인하고 다시 눌러 주세요.'});
+  }
+  function rv(f,n){var r=f.querySelector('input[name='+n+']:checked');return r?r.value:''}
+  var fR=$('fRsvp');
+  function syncAtt(){$('attOnly').hidden=rv(fR,'attend')!=='참석할게요'}
+  fR.addEventListener('change',syncAtt);syncAtt();
+  fR.addEventListener('submit',function(e){
+    e.preventDefault();
+    var side=rv(fR,'side'),att=rv(fR,'attend'),name=$('rName').value.trim();
+    if(!side){$('rStatus').textContent='하객 구분을 선택해 주세요.';return}
+    if(!att){$('rStatus').textContent='참석 여부를 선택해 주세요.';return}
+    if(!name){$('rStatus').textContent='성함을 입력해 주세요.';$('rName').focus();return}
+    var p=new URLSearchParams();
+    p.append('entry.1998111263',side);p.append('entry.872149624',name);p.append('entry.876980279',att);
+    if(att==='참석할게요'){p.append('entry.1729398221',String(Math.max(1,Math.min(10,parseInt($('rCount').value,10)||1))));p.append('entry.429938814',rv(fR,'meal'))}
+    if($('rNote').value.trim())p.append('entry.1187239501',$('rNote').value.trim());
+    send(RSVP_URL,p,$('rGo'),$('rStatus'),function(){$('rsvpBody').hidden=true;$('rDone').hidden=false});
+  });
+  var fM=$('fMsg');
+  fM.addEventListener('submit',function(e){
+    e.preventDefault();
+    var n=$('gName').value.trim(),m=$('gMsg').value.trim();
+    if(!n){$('gStatus').textContent='성함을 입력해 주세요.';$('gName').focus();return}
+    if(!m){$('gStatus').textContent='축하 메시지를 입력해 주세요.';$('gMsg').focus();return}
+    var p=new URLSearchParams();p.append('entry.77363588',n);p.append('entry.475126356',m);
+    send(MSG_URL,p,$('gGo'),$('gStatus'),function(){$('msgBody').hidden=true;$('gDone').hidden=false});
+  });
 })();
 </script>
