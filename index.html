@@ -175,41 +175,10 @@ textarea{min-height:92px;resize:vertical}
   </dl>
 </section>
 
-<section id="rsvpSec">
-  <h2>참석 여부</h2>
-  <p class="note center" style="margin-bottom:18px">식사 인원을 준비하려고 여쭤봅니다. 편하게 알려 주세요.</p>
-  <form class="form" id="rsvpForm" novalidate>
-    <fieldset><legend>구분</legend>
-      <div class="seg"><label><input type="radio" name="side" value="신랑측" checked><span>신랑측</span></label><label><input type="radio" name="side" value="신부측"><span>신부측</span></label></div></fieldset>
-    <fieldset><legend>참석 여부</legend>
-      <div class="seg"><label><input type="radio" name="attend" value="참석" checked><span>참석할게요</span></label><label><input type="radio" name="attend" value="불참"><span>참석이 어려워요</span></label></div></fieldset>
-    <div><label class="l" for="rName">성함 (필수)</label><input type="text" id="rName" autocomplete="name" maxlength="30"></div>
-    <div id="attendOnly" class="form">
-      <div><label class="l" for="rCount">참석 인원 (본인 포함)</label><input type="number" id="rCount" min="1" max="10" value="1" inputmode="numeric"></div>
-      <fieldset><legend>식사</legend>
-        <div class="seg"><label><input type="radio" name="meal" value="식사함" checked><span>식사할게요</span></label><label><input type="radio" name="meal" value="식사 안 함"><span>식사는 안 해요</span></label></div></fieldset>
-    </div>
-    <div><label class="l" for="rNote">전달하실 말씀</label><textarea id="rNote" maxlength="300"></textarea></div>
-    <button class="btn fill" type="submit" id="rSubmit" style="justify-content:center">전달하기</button>
-    <p class="status" id="rStatus" role="status"></p>
-  </form>
-  <div class="box" id="rFallback" hidden>
-    <p>이 화면에서는 바로 전달하기가 어려워요. 아래 버튼으로 내용을 복사해서 카카오톡으로 보내 주세요.</p>
-    <div class="row" style="justify-content:flex-start"><button class="btn" type="button" id="rCopy">내용 복사하기</button></div>
-  </div>
-  <div class="owner" id="ownerBox" hidden><b>신랑·신부에게만 보여요</b><div id="ownerSum" style="margin-top:6px"></div></div>
-</section>
-
-<section>
-  <h2>방명록</h2>
-  <div id="gbNone" class="box" hidden><p>축하 메시지는 카카오톡으로 전해 주세요. 따뜻한 말씀을 기다리고 있을게요.</p></div>
-  <form class="form" id="gbForm" hidden novalidate>
-    <div><label class="l" for="gName">성함</label><input type="text" id="gName" maxlength="30"></div>
-    <div><label class="l" for="gMsg">축하 메시지</label><textarea id="gMsg" maxlength="400"></textarea></div>
-    <button class="btn fill" type="submit" style="justify-content:center">남기기</button>
-    <p class="status" id="gStatus" role="status"></p>
-  </form>
-  <div class="msgs" id="gbList"></div>
+<section id="rsvpSec" class="center">
+  <h2>참석 여부 · 축하 메시지</h2>
+  <p class="note">식사 인원을 준비하려고 여쭙니다.<br>편하게 알려 주세요.</p>
+  <div class="row" style="margin-top:18px"><a class="btn fill" href="https://forms.gle/vswHyJ63Xr1izcGq5" target="_blank" rel="noopener" style="min-width:220px;justify-content:center">참석 여부 · 축하 메시지 남기기</a></div>
 </section>
 
 <section class="center">
@@ -269,83 +238,5 @@ textarea{min-height:92px;resize:vertical}
   $('copyAddr').onclick=function(){copy('부산 연제구 중앙대로 1217 국제신문 4층 (K웨딩홀)',$('addrStatus'),'주소를 복사했어요.')};
   $('share').onclick=function(){copy(location.href.split('#')[0],$('shareStatus'),'링크를 복사했어요.')};
 
-  /* RSVP form basics */
-  var form=$('rsvpForm');
-  function val(n){var r=form.querySelector('input[name='+n+']:checked');return r?r.value:''}
-  function syncAttend(){$('attendOnly').hidden=val('attend')!=='참석'}
-  form.addEventListener('change',syncAttend);syncAttend();
-  function rsvpData(){
-    var attend=val('attend');
-    return {side:val('side'),attend:attend,name:$('rName').value.trim(),count:attend==='참석'?Math.max(1,Math.min(10,parseInt($('rCount').value,10)||1)):0,meal:attend==='참석'?val('meal'):'',note:$('rNote').value.trim(),at:Date.now()};
-  }
-  function rsvpText(d){
-    return '[참석 여부] '+d.side+' '+d.name+' · '+d.attend+(d.attend==='참석'?' · '+d.count+'명 · '+d.meal:'')+(d.note?'\n'+d.note:'');
-  }
-  /* default state when the shared store is not available: copy a ready message */
-  $('rSubmit').hidden=true;$('rFallback').hidden=false;
-  $('rCopy').onclick=function(){
-    var d=rsvpData();
-    if(!d.name){$('rStatus').textContent='성함을 먼저 적어 주세요.';$('rName').focus();return}
-    copy(rsvpText(d),$('rStatus'),'복사했어요. 카카오톡에 붙여넣어 보내 주세요.');
-  };
-  form.addEventListener('submit',function(e){e.preventDefault()});
-
-  /* shared store (RSVP + guestbook) when this view can use it */
-  function stamp(t){var d=new Date(t);return (d.getMonth()+1)+'/'+d.getDate()}
-  (async function(){
-    var db=null,user=null,uid=null;
-    try{ if(window.claude&&claude.use){ db=await claude.use('db'); user=await claude.use('user'); uid=user?await user.id():null } }catch(e){}
-    if(!db||!uid){ $('gbNone').hidden=false; return }
-    var rsvpRef=db.doc('rsvp/'+uid), gbRef=db.doc('guestbook/'+uid);
-    $('rFallback').hidden=true;$('rSubmit').hidden=false;$('gbForm').hidden=false;
-    try{
-      var mine=await rsvpRef.get();
-      if(mine.exists){var m=mine.data();
-        var s=form.querySelector('input[name=side][value="'+m.side+'"]');if(s)s.checked=true;
-        var a=form.querySelector('input[name=attend][value="'+m.attend+'"]');if(a)a.checked=true;
-        if(m.meal){var ml=form.querySelector('input[name=meal][value="'+m.meal+'"]');if(ml)ml.checked=true}
-        $('rName').value=m.name||'';if(m.count)$('rCount').value=m.count;$('rNote').value=m.note||'';syncAttend();
-        $('rStatus').textContent='이미 전달해 주셨어요. 바꾸셔도 괜찮아요.';
-        $('gName').value=m.name||'';
-      }
-    }catch(e){}
-    var busy=false;
-    form.addEventListener('submit',async function(e){
-      e.preventDefault();if(busy)return;
-      var d=rsvpData();
-      if(!d.name){$('rStatus').textContent='성함을 먼저 적어 주세요.';$('rName').focus();return}
-      busy=true;$('rStatus').textContent='전달하고 있어요...';
-      try{await rsvpRef.set(d);$('rStatus').textContent='전달됐어요. 감사합니다.'}
-      catch(err){$('rStatus').textContent='전달하지 못했어요. 잠시 뒤 다시 시도하거나 카카오톡으로 알려 주세요.'}
-      busy=false;
-    });
-    $('gbForm').addEventListener('submit',async function(e){
-      e.preventDefault();
-      var n=$('gName').value.trim(),m=$('gMsg').value.trim();
-      if(!n||!m){$('gStatus').textContent='성함과 메시지를 모두 적어 주세요.';return}
-      $('gStatus').textContent='남기고 있어요...';
-      try{await gbRef.set({name:n,msg:m,at:Date.now()});$('gStatus').textContent='남겨 주셔서 감사합니다.'}
-      catch(err){$('gStatus').textContent='남기지 못했어요. 잠시 뒤 다시 시도해 주세요.'}
-    });
-    db.collection('guestbook').orderBy('at','desc').limit(100).onSnapshot(function(snap){
-      var box=$('gbList');box.textContent='';
-      snap.docs.forEach(function(doc){var x=doc.data();if(!x)return;
-        var w=document.createElement('div');w.className='msg';
-        var t=document.createElement('time');t.textContent=stamp(x.at);
-        var b=document.createElement('b');b.textContent=x.name||'';
-        var p=document.createElement('p');p.textContent=x.msg||'';
-        w.appendChild(t);w.appendChild(b);w.appendChild(p);box.appendChild(w)});
-    },function(){});
-    /* owner summary */
-    var admin=false;try{admin=await user.canEdit()}catch(e){}
-    if(admin){
-      db.collection('rsvp').onSnapshot(function(snap){
-        var s={'신랑측':{y:0,n:0,p:0},'신부측':{y:0,n:0,p:0}};
-        snap.docs.forEach(function(doc){var x=doc.data();if(!x||!s[x.side])return;if(x.attend==='참석'){s[x.side].y++;s[x.side].p+=x.count||0}else s[x.side].n++});
-        $('ownerBox').hidden=false;
-        $('ownerSum').textContent='신랑측 참석 '+s['신랑측'].y+'팀 '+s['신랑측'].p+'명 · 불참 '+s['신랑측'].n+' / 신부측 참석 '+s['신부측'].y+'팀 '+s['신부측'].p+'명 · 불참 '+s['신부측'].n+' / 합계 '+(s['신랑측'].p+s['신부측'].p)+'명';
-      },function(){});
-    }
-  })();
 })();
 </script>
